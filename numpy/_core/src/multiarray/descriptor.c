@@ -2299,7 +2299,7 @@ _name_includes_bit_suffix(PyArray_Descr *dtype)
     }
     else if (PyType_IsSubtype(scalar_type, &PyFlexibleArrType_Type)
              && dtype->elsize == 0) {
-                return 0;
+        return 0;
     }
     return 1;
 }
@@ -2307,9 +2307,9 @@ _name_includes_bit_suffix(PyArray_Descr *dtype)
 /*
  * Return a new string `<name><elsize * 8>`
  *
- * On 32-bit builds (npy_intp is 32 bits, e.g. 32-bit Linux or Pyodide) any
- * size above NPY_MAX_INTP / 8 overflows.  Fall back to Python integers in that 
- * rare case
+ * elsize * 8 overflows npy_intp for elsize > NPY_MAX_INTP / 8 (reachable with
+ * large void dtypes, e.g. `np.dtype(f"V{2**61}")`), so fall back to Python
+ * integers in that case.
  */
 static PyObject *
 _append_bit_count(PyObject *name, npy_intp elsize)
@@ -2317,7 +2317,7 @@ _append_bit_count(PyObject *name, npy_intp elsize)
     if (elsize >= 0 && elsize <= NPY_MAX_INTP / 8) {
         return PyUnicode_FromFormat("%U%zd", name, (Py_ssize_t)(elsize * 8));
     }
- 
+
     PyObject *size = PyLong_FromSsize_t((Py_ssize_t)elsize);
     PyObject *three = PyLong_FromLong(3);
     PyObject *bits = NULL;
